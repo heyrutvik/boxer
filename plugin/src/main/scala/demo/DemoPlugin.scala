@@ -1,35 +1,29 @@
 package demo
 
-import scala.tools.nsc.{ Global, Phase }
-import scala.tools.nsc.plugins.{ Plugin, PluginComponent }
+import scala.tools.nsc.Global
+import scala.tools.nsc.plugins.{Plugin, PluginComponent}
+import scala.tools.nsc.transform.{Transform, TypingTransformers}
 
 class DemoPlugin(val global: Global) extends Plugin {
 
-  val name = "demo-plugin"
-  val description = "Enforces coding standards"
-  val components = List[PluginComponent](DemoComponent)
+  val name = "lazyval-optimizer-plugin"
+  val description = "convert all lazy val to optimized version"
+  val components = List[PluginComponent](LazyvalOptComponent)
 
-  private object DemoComponent extends PluginComponent {
+  private object LazyvalOptComponent extends PluginComponent with Transform with TypingTransformers {
     val global = DemoPlugin.this.global
     import global._
 
-    override val runsAfter = List("erasure")
+    override val runsAfter = List("typer")
 
-    val phaseName = "Demo"
+    val phaseName = "lazyval-optimizer"
 
-    override def newPhase(prev: Phase): StdPhase = new StdPhase(prev) {
-      override def apply(unit: CompilationUnit) {
-        new DemoTraverser(unit) traverse unit.body
-      }
+    protected def newTransformer(unit: CompilationUnit): Transformer = {
+      new LazyValTransformer(unit)
     }
 
-    class DemoTraverser(unit: CompilationUnit) extends Traverser {
-      override def traverse(tree: Tree): Unit = tree match {
-        case New(tpt) if exitingTyper(tpt.tpe.typeSymbol.isDerivedValueClass) =>
-          reporter.warning(tree.pos, s"Value class `${tpt.tpe.typeSymbol.fullName}` instantiated!")
-        case _ =>
-          super.traverse(tree)
-      }
+    class LazyValTransformer(unit: CompilationUnit) extends TypingTransformer(unit) {
+      // TODO
     }
   }
 }

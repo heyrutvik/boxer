@@ -7,7 +7,7 @@ lazy val sharedSettings = Seq(
   scalaVersion  := "2.12.4",
   organization  := "demo",
   name          := "boxer",
-  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint")
+  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint", "-Xprint:all")
 )
 
 // This subproject contains a Scala compiler plugin that checks for
